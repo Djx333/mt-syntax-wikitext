@@ -1,0 +1,33 @@
+{
+    name:["WikiText",".wiki",".w",".wikitext"]
+    hide: false
+    ignoreCase: true
+    colors: [
+        "link_kicked", #1D1389, #0B0080
+        "link", #0851C5, #558ABF
+    ]
+    lineBackground: {match: /(==+) \S+ \1/, color: "tagName"}
+    lineBackground: {match: /-{4,}/, color: "comment"}
+    contains: [ 
+        {
+            start: {match: /<(nowiki)|(pre)>.*?[^(<\/(nowiki)|(pre)>)].*?/}
+            end: {match: /.*?<\/nowiki>/}
+            color: "normal"
+        }
+        {match: /\|/, 0:"label"}
+        {match: /<.+?>/, 0:"comment"}
+//        {match: /<(\S+?).+?>.^<+?<\/\1>/, 0:"string"}
+        {match: /\{\{.+?(?=(\|)|(\}\}))/, 0: "strEscape"}
+        {match: /(?<=\|)\s+?\w+?=/, 0:"comment"}
+        {match: /(?<!\{\{)\}\}/, 0: "strEscape"}
+        {match: /\*/, 0:"number"}
+        {match: /#/, 0:"number"}
+        {match: /:+/, 0:"number"}
+        {match: /;/, 0:"number"}
+        {match: /https?:\/\/.*?(?=(\s)|(\]))/, 0: "link_kicked"}
+        {match: /\[\[/, 0:"strEscape"}
+        {match: /(?<=\[\[).+?(?=(\|)|(\]\]))/,  0: "link"}
+        {match: /\]\]/, 0: "strEscape"}
+        {match: /'{2,}/, 0:"comment"}
+    ]
+}
