@@ -1,33 +1,113 @@
 {
-    name:["WikiText",".wiki",".w",".wikitext"]
-    hide: false
-    ignoreCase: true
-    colors: [
-        "link_kicked", #1D1389, #0B0080
-        "link", #0851C5, #558ABF
+    name: ["WikiText", ".w", ".wiki", ".wt", ".wtxt"]
+    styles: [
+        "b", @B
+        "i", @I
+        "u", @U
+        "d", @S
+        "tip", #NULL#EEEEEE, #NULL#808080
+        "tag" > "tagName"
+        "link", #1232AC#F0FCEE, #6BA6EF#2D3B3F 
+        "link_text", #NULL#F0FCEE, #NULL#2D3B3F
+        "template", #7B53D9, #8F63F6
+        "other", #2E6BC5, #6CA8F1
+        "heading" > "other", @B
+        "linb" > "tip", @B
     ]
-    lineBackground: {match: /(==+) \S+ \1/, color: "tagName"}
-    lineBackground: {match: /-{4,}/, color: "comment"}
-    contains: [ 
-        {
-            start: {match: /<(nowiki)|(pre)>.*?[^(<\/(nowiki)|(pre)>)].*?/}
-            end: {match: /.*?<\/nowiki>/}
-            color: "normal"
+    comment: {startsWith: "<!--", endsWith: "-->"}
+    defines: [
+        "nowiki": [
+            {
+                start: {match: /<(pre|nowiki)>/, 0:"comment" 1:"tag"}
+                end: {match: /<\/(pre|nowiki)>/, 0:"comment" 1:"tag"}
+            }
+            {match: /<(pre|nowiki)\s\/>/, 0:"comment" 1:"tag"}
+        ]
+        "title": {match: /(.*:)?(.+?)(?=[|\]])/ 1:"i", 2:"u"}
+        "template": {
+            start: {match: /(\{\{\{?)\s?(.+?)(?=\W)/ 0:"b", 2:"u"}
+            end: {match: /\}\}\}?/, 0: "b"}
+            style: "template"
+            childrenStyle: "normal"
+            contains: [
+                {match: /(\|)\s?.+?\s?=/, 1:"tip", 0:"template"}
+                {include: "all"}
+                // <EndMatcher>
+            ]
         }
-        {match: /\|/, 0:"label"}
-        {match: /<.+?>/, 0:"comment"}
-//        {match: /<(\S+?).+?>.^<+?<\/\1>/, 0:"string"}
-        {match: /\{\{.+?(?=(\|)|(\}\}))/, 0: "strEscape"}
-        {match: /(?<=\|)\s+?\w+?=/, 0:"comment"}
-        {match: /(?<!\{\{)\}\}/, 0: "strEscape"}
-        {match: /\*/, 0:"number"}
-        {match: /#/, 0:"number"}
-        {match: /:+/, 0:"number"}
-        {match: /;/, 0:"number"}
-        {match: /https?:\/\/.*?(?=(\s)|(\]))/, 0: "link_kicked"}
-        {match: /\[\[/, 0:"strEscape"}
-        {match: /(?<=\[\[).+?(?=(\|)|(\]\]))/,  0: "link"}
-        {match: /\]\]/, 0: "strEscape"}
-        {match: /'{2,}/, 0:"comment"}
+        "link-in": {
+            start:{match: /(\[\[)\s?(.+?)(?=[|\]])/, 1:"b", 2:{include:"title"}}
+            end:{match: /\]\]/, 0:"b"}
+            style: "link"
+            childrenStyle: "normal"
+            contains:[{match:/\|/, 0:"linb"}]
+        }
+        "urlRegex": /(?i)\b((?:[a-z][\w-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))/
+        "link-out":{
+            start: {match:/(\[)(/ + include("urlRegex") + /)/, 1:"b", 2:"u"}
+            end: {match:/(\])/, 0:"b"}
+            style: "link"
+            childrenStyle: "link_text"
+            contains:[{match:/\s(.+?)/,
+                // 0:"b"
+                1:{include: "all"}
+            }]
+        }
+        "list":{match: /([#*]|^)[#*]/, 0:"other"}
+        "heading":{match: /^(=+?)([^=]+?)(\1)/,
+            1:"heading"
+            2:"b"
+            2:{include: "all"}
+            3:"heading"
+        }
+        "bold":{
+            start:{match: /'''/, 0:"comment"}
+            end:{match: /'''/, 0:"comment"}
+            childrenStyle:"b"
+            contains:[{include:"all"}]
+        }
+        "italic":{
+            start:{match: /''/, 0:"comment"}
+            end:{match: /''/, 0:"comment"}
+            childrenStyle:"i"
+            contains:[{include:"all"}]
+        }
+        "tag-pair":{
+            start:{
+                start:{match:/<(.+?)(?=\s|>)/, 1:"tag"}
+                end:{match:/>/}
+                contains:[
+                    {match:/(?<=\s)(\w+?)=(.+?)(?=\s|>)/
+                        1:"tag"
+                        2:{builtin: #QUOTED_STRING#}
+                    }
+                ]
+            }
+            end:{match:/<\/(.+?)>/, 1:"tag"}
+            contains:[{include:"all"}]
+        }
+        "tag-single":{
+            start:{match:/<(.+?)(?=\s|\/)/, 1:"tag"}
+            end:{match:/\/>/}
+            contains:[
+                {match:/(?<=\s)(\w+?)=(.+?)(?=\s|>)/
+                    1:"tag"
+                    2:{builtin: #QUOTED_STRING#}
+                }
+            ]
+        }
+        "all":[
+            {include:"nowiki"}
+            {include:"template"}
+            {include:"link-in"}
+            {include:"link-out"}
+            {include:"list"}
+            {include:"heading"}
+            {include:"bold"}
+            {include:"italic"}
+            {include:"tag-pair"}
+            {include:"tag-single"}
+        ]
     ]
+    contains:[{include:"all"}]
 }
